@@ -124,38 +124,42 @@ export function encodeSlideMediaRels (layout: PresSlide | SlideLayout): Array<Pr
  */
 async function createSvgPngPreview (rel: ISlideRelMedia): Promise<string> {
 	return await new Promise((resolve, reject) => {
-		// A: Create
-		const image = new Image()
-
-		// B: Set onload event
-		image.onload = () => {
-			// First: Check for any errors: This is the best method (try/catch wont work, etc.)
-			if (image.width + image.height === 0) {
-				image.onerror('h/w=0')
-			}
-			let canvas: HTMLCanvasElement = document.createElement('CANVAS') as HTMLCanvasElement
-			const ctx = canvas.getContext('2d')
-			canvas.width = image.width
-			canvas.height = image.height
-			ctx.drawImage(image, 0, 0)
-			// Users running on local machine will get the following error:
-			// "SecurityError: Failed to execute 'toDataURL' on 'HTMLCanvasElement': Tainted canvases may not be exported."
-			// when the canvas.toDataURL call executes below.
-			try {
-				rel.data = canvas.toDataURL(rel.type)
-				resolve('done')
-			} catch (ex) {
-				image.onerror(ex)
-			}
-			canvas = null
+	// A: Create
+	var image = new Image();
+	// B: Set onload event
+	image.onload = function () {
+		// First: Check for any errors: This is the best method (try/catch wont work, etc.)
+		if (image.width + image.height === 0) {
+			image.onerror('h/w=0');
 		}
-		image.onerror = ex => {
-			rel.data = IMG_BROKEN
-			reject(new Error(`ERROR! Unable to load image (image.onerror): ${rel.path}`))
+		var canvas = document.createElement('CANVAS');
+		var ctx = canvas.getContext('2d');
+		canvas.width = image.width;
+		canvas.height = image.height;
+		ctx.drawImage(image, 0, 0);
+		// Users running on local machine will get the following error:
+		// "SecurityError: Failed to execute 'toDataURL' on 'HTMLCanvasElement': Tainted canvases may not be exported."
+		// when the canvas.toDataURL call executes below.
+		try {
+			console.log("rel.type", rel.type)
+			console.log(canvas.toDataURL(rel.type))
+			rel.data = canvas.toDataURL(rel.type);
+			console.log("rel.data", rel.data)
+			resolve('done');
 		}
-
-		// C: Load image
-		image.src = typeof rel.data === 'string' ? rel.data : IMG_BROKEN
+		catch (ex) {
+			console.log("ex", ex)
+			image.onerror(ex);
+		}
+		canvas = null;
+	};
+	image.onerror = function (ex) {
+		rel.data = IMG_BROKEN;
+		reject(new Error("ERROR! Unable to load image (image.onerror): ".concat(rel.path)));
+	};
+	// C: Load image
+	image.src = typeof rel.data === 'string' ? rel.data : IMG_BROKEN;
+	console.log("image.src", image.src)
 	})
 }
 
